@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>인체 생리 시뮬레이터 | 광고 vs 실제</title>
+<meta name="description" content="미용·다이어트·수면 보조제가 인체에서 실제로 어떻게 작용하는지, 광고 문구와 좌우로 나란히 비교해보는 인체 생리 시뮬레이터" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Song+Myung&display=swap"
+  rel="stylesheet"
+/>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app">
+
+  <header class="app-header">
+    <div class="eyebrow">Pharmacokinetic Mythbuster</div>
+    <h1>인체 생리 시뮬레이터</h1>
+    <p class="subtitle">광고가 말하는 것과, 몸이 실제로 하는 것을 좌우로 나란히 비교해보세요.</p>
+    <button id="btn-intro" class="btn-ghost" type="button">사용법 보기</button>
+  </header>
+
+  <main class="layout">
+
+    <!-- ============================================================= -->
+    <!-- 왼쪽: 기기 목록 (= DB 레코드 목록)                              -->
+    <!-- ============================================================= -->
+    <aside class="device-rail">
+      <h2 class="rail-title">기기 목록</h2>
+      <ul id="device-list" class="device-list" role="listbox" aria-label="제품 목록"></ul>
+      <button id="btn-add-device" class="btn-add" type="button">+ 새 기기 추가</button>
+      <div class="rail-io">
+        <button id="btn-export" type="button" title="전체 기기 목록을 JSON 파일로 저장">⇩ 내보내기</button>
+        <button id="btn-import" type="button" title="친구가 만든 JSON 파일 불러오기">⇧ 불러오기</button>
+        <input type="file" id="file-import" accept="application/json" hidden />
+      </div>
+      <button id="btn-reset" class="btn-reset" type="button" title="추가/수정/삭제한 내용을 모두 지우고 처음 3개 기기로 되돌립니다">⟲ 초기 데이터로 되돌리기</button>
+    </aside>
+
+    <!-- ============================================================= -->
+    <!-- 가운데: 인체 도해                                              -->
+    <!-- ============================================================= -->
+    <section class="body-stage-wrap">
+      <div id="body-stage" class="body-stage">
+        <svg id="anatomy" viewBox="0 0 320 640" xmlns="http://www.w3.org/2000/svg" aria-label="인체 정면 도해">
+
+          <!-- 실루엣 -->
+          <circle class="silhouette" cx="160" cy="72" r="46" />
+          <rect class="silhouette" x="147" y="112" width="26" height="20" />
+          <rect class="silhouette" x="95" y="128" width="130" height="190" rx="46" />
+          <path class="silhouette" d="M100,150 Q55,230 78,330" fill="none" />
+          <path class="silhouette" d="M220,150 Q265,230 242,330" fill="none" />
+          <path class="silhouette" d="M130,318 Q120,470 128,610" fill="none" />
+          <path class="silhouette" d="M190,318 Q200,470 192,610" fill="none" />
+
+          <g class="organ" data-organ="skin">
+            <title>피부(얼굴)</title>
+            <ellipse class="organ-shape" cx="160" cy="82" rx="34" ry="40" />
+          </g>
+
+          <g class="organ" data-organ="liver">
+            <title>간</title>
+            <path class="organ-shape" d="M108,155 C95,165 92,195 100,215 C112,228 145,225 150,205 C155,180 145,158 125,152 Z" />
+          </g>
+
+          <g class="organ" data-organ="stomach">
+            <title>위</title>
+            <ellipse class="organ-shape" cx="205" cy="195" rx="22" ry="30" transform="rotate(-15 205 195)" />
+          </g>
+
+          <g class="organ" data-organ="intestine">
+            <title>소장·대장</title>
+            <path class="organ-shape" d="M100,245 Q120,225 140,245 T180,245 T220,245 Q228,260 220,275 Q200,290 180,275 T140,275 T100,275 Q92,260 100,245 Z" />
+          </g>
+
+          <g class="organ" data-organ="kidney">
+            <title>신장</title>
+            <ellipse class="organ-shape" cx="88" cy="215" rx="12" ry="18" />
+            <ellipse class="organ-shape" cx="232" cy="215" rx="12" ry="18" />
+          </g>
+
+          <g class="organ" data-organ="brain">
+            <title>뇌</title>
+            <ellipse class="organ-shape" cx="160" cy="60" rx="27" ry="20" />
+          </g>
+
+        </svg>
+        <div id="detail-fx" class="detail-fx" aria-hidden="true"></div>
+      </div>
+
+      <div id="organ-legend" class="organ-legend" role="group" aria-label="기관 범례"></div>
+      <p class="organ-hint" id="organ-hint">기관을 클릭하면 설명이 나타납니다.</p>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- 오른쪽: 좌우 분할 비교 화면                                     -->
+    <!-- ============================================================= -->
+    <section class="dossier" id="dossier">
+      <p class="dossier-empty" id="dossier-empty">왼쪽 목록에서 기기를 선택하면<br />광고 주장과 실제 작용을 좌우로 비교할 수 있어요.</p>
+
+      <div class="dossier-content" id="dossier-content" hidden>
+        <div class="dossier-head">
+          <h2 id="device-title"></h2>
+          <span id="device-category" class="chip"></span>
+          <button id="btn-edit-device" class="btn-edit-inline" type="button" title="이 기기 수정">✎ 수정</button>
+        </div>
+
+        <!-- 좌우 분할 비교 -->
+        <div class="split-compare">
+          <div class="split-col split-ad">
+            <div class="col-label">광고 주장</div>
+            <p id="text-ad"></p>
+          </div>
+          <div class="split-mid" aria-hidden="true">
+            <svg viewBox="0 0 26 200" preserveAspectRatio="none">
+              <line x1="13" y1="0" x2="13" y2="200" stroke="var(--line-etch)" stroke-width="1" stroke-dasharray="3 5" />
+            </svg>
+          </div>
+          <div class="split-col split-real">
+            <div class="col-label">실제 기전</div>
+            <p id="text-real"></p>
+          </div>
+        </div>
+
+        <div class="warn-row">
+          <div class="col-label">⚠ 한계 · 부작용</div>
+          <p id="text-warn"></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ================================================================= -->
+<!-- 모달: 기기 추가 / 수정 (같은 폼을 재사용)                            -->
+<!-- ================================================================= -->
+<div class="modal" id="modal-add" hidden>
+  <form class="modal-card" id="form-add">
+    <h2 id="modal-add-title">새 기기 추가</h2>
+    <p style="margin:0;font-size:12.5px;color:var(--text-muted)">
+      이 브라우저의 기기 데이터베이스에 저장돼요. 친구와 맞추려면 "내보내기"로 JSON을 보내주세요.
+    </p>
+
+    <label>제품 이름
+      <input type="text" id="f-name" placeholder="예: 다이어트 패치" required />
+    </label>
+
+    <div class="modal-row">
+      <label>아이콘(이모지)
+        <input type="text" id="f-emoji" placeholder="💊" maxlength="4" />
+      </label>
+      <label>분류
+        <select id="f-category">
+          <option value="뷰티">뷰티</option>
+          <option value="다이어트">다이어트</option>
+          <option value="수면">수면</option>
+          <option value="기타">기타</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="modal-row">
+      <label>주로 작용하는 기관
+        <select id="f-organ">
+          <option value="skin">피부(얼굴)</option>
+          <option value="brain">뇌</option>
+          <option value="stomach">위</option>
+          <option value="intestine">소장·대장</option>
+          <option value="liver">간</option>
+          <option value="kidney">신장</option>
+        </select>
+      </label>
+      <label>애니메이션 종류
+        <select id="f-anim">
+          <option value="pulse">범용 펄스</option>
+          <option value="wave">파동(광선)</option>
+          <option value="ferment">기포(발효)</option>
+          <option value="receptor">수용체 결합</option>
+        </select>
+      </label>
+    </div>
+
+    <label>광고 주장
+      <textarea id="f-ad" rows="2" placeholder="광고에서 흔히 하는 과장된 문구" required></textarea>
+    </label>
+
+    <label>실제 기전
+      <textarea id="f-real" rows="3" placeholder="실제 인체에서 일어나는 일 (아는 만큼, 최대한 정확하게)" required></textarea>
+    </label>
+
+    <label>한계 · 부작용
+      <textarea id="f-warn" rows="2" placeholder="과장과 실제의 차이, 부작용, 주의할 점"></textarea>
+    </label>
+
+    <div class="modal-actions">
+      <button type="button" id="btn-cancel-add">취소</button>
+      <button type="submit" class="btn-primary" id="btn-submit-add">추가하기</button>
+    </div>
+  </form>
+</div>
+
+<!-- ================================================================= -->
+<!-- 모달: 사용법                                                        -->
+<!-- ================================================================= -->
+<div class="modal" id="modal-intro" hidden>
+  <div class="modal-card intro-card">
+    <h2>이 시뮬레이터는 이렇게 써요</h2>
+    <ol>
+      <li>왼쪽에서 궁금한 제품을 고르면, 오른쪽에 광고 주장과 실제 기전이 좌우로 나란히 나타나요.</li>
+      <li>동시에 인체 도해에서 실제로 작용하는 기관이 확대되며 빛나요.</li>
+      <li>기기 목록의 <strong>✎</strong>로 내용을 수정하고, <strong>✕</strong>로 삭제할 수 있어요. 처음 3개 기기도 자유롭게 고칠 수 있는 "내 데이터베이스"예요.</li>
+      <li><strong>+ 새 기기 추가</strong>로 궁금한 제품을 직접 등록하고, <strong>내보내기</strong>로 친구에게 공유해보세요.</li>
+      <li>실수로 다 헝클어졌다면 <strong>초기 데이터로 되돌리기</strong>로 리셋할 수 있어요.</li>
+    </ol>
+    <p>※ 교육·비판적 사고를 돕기 위한 참고 자료이며, 의학적 진단이나 개별 제품에 대한 조언이 아닙니다.</p>
+    <div class="modal-actions">
+      <button type="button" id="btn-close-intro" class="btn-primary">확인했어요</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/devices.js"></script>
+<script src="js/db.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
