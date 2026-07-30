@@ -172,6 +172,10 @@
     <text class="organ-label" x="160" y="252" text-anchor="middle">신장</text>
   </g>
 
+  <!-- 몸속 이동 경로 안내선(위→소장→간→신장) + 재생 중 이동하는 점 -->
+  <path class="flow-path" d="M204,196 L150,262 L118,186 L160,216" />
+  <circle id="flow-dot" class="flow-dot" cx="160" cy="140" r="5" opacity="0" />
+
 </svg>
         <div id="detail-fx" class="detail-fx" aria-hidden="true"></div>
       </div>
@@ -191,6 +195,12 @@
           <h2 id="device-title"></h2>
           <span id="device-category" class="chip"></span>
           <button id="btn-edit-device" class="btn-edit-inline" type="button" title="이 기기 수정">✎ 수정</button>
+        </div>
+
+        <div class="level-toggle" role="group" aria-label="설명 난이도 선택">
+          <span class="level-toggle-label">실제 기전 설명</span>
+          <button type="button" class="level-btn active" data-level="simple" id="btn-level-simple">쉬운 설명</button>
+          <button type="button" class="level-btn" data-level="detailed" id="btn-level-detailed">자세히</button>
         </div>
 
         <!-- 좌우 분할 비교 -->
@@ -287,8 +297,12 @@
       <textarea id="f-ad" rows="2" placeholder="광고에서 흔히 하는 과장된 문구" required></textarea>
     </label>
 
-    <label>실제 기전 <span class="field-hint">(표적 기관 단계에서 보여지는 설명)</span>
+    <label>실제 기전 <span class="field-hint">(표적 기관 단계에서 보여지는 "자세히" 설명)</span>
       <textarea id="f-real" rows="3" placeholder="실제 인체에서 일어나는 일 (아는 만큼, 최대한 정확하게)" required></textarea>
+    </label>
+
+    <label>실제 기전 — 쉬운 설명 <span class="field-hint">(선택 — 비워두면 위 내용을 그대로 사용)</span>
+      <textarea id="f-real-simple" rows="2" placeholder="한두 문장, 어려운 용어 없이 (예: 어린이·어르신도 이해할 수 있게)"></textarea>
     </label>
 
     <fieldset id="step-fields" class="step-fields">
